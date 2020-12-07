@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import static ru.notsoold.cardcv.CardCvUtils.*;
+import static ru.notsoold.cardcv.PlayingCardsIdentifier.CONVOLUTION_LAYER_FILTERS_QUANTITY;
 
 public class PoolLayer {
 
@@ -28,6 +29,26 @@ public class PoolLayer {
             resultPooledImages.add(resultPooledImage);
         }
         return resultPooledImages;
+    }
+
+    public double[][][] backprop(double[][][] fclGradient) {
+        double[][][] ret = new double[CONVOLUTION_LAYER_FILTERS_QUANTITY][originals.get(0).getWidth()][originals.get(0).getHeight()];
+        for (int filterIdx = 0; filterIdx < originals.size(); filterIdx++) {
+            BufferedImage original = originals.get(filterIdx);
+            for (int w = 0; w < original.getWidth() - 1; w += 2) {
+                for (int h = 0; h < original.getHeight() - 1; h += 2) {
+                    int maxRgb = getMaxRgb2x2(original.getRGB(w, h, 2, 2, null, 0, 2));
+                    for (int i = 0; i < 2; i++) {
+                        for (int j = 0; j < 2; j++) {
+                            if (original.getRGB(i, j) == maxRgb) {
+                                ret[filterIdx][w][h] = fclGradient[filterIdx][w / 2][h / 2];
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        return ret;
     }
 
     public List<BufferedImage> getResultPooledImages() {

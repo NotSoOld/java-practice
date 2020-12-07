@@ -9,6 +9,7 @@ import static ru.notsoold.cardcv.CardCvUtils.*;
 public class ConvolutionLayer {
 
     private List<double[]> filters;
+    private BufferedImage original;
     private List<BufferedImage> convolutionResult;
 
     public ConvolutionLayer(int filtersQuantity) {
@@ -16,6 +17,7 @@ public class ConvolutionLayer {
     }
 
     public List<BufferedImage> forward(BufferedImage originalCardImage) {
+        original = originalCardImage;
         convolutionResult = new ArrayList<>();
         for (double[] kernel: filters) {
             BufferedImage convolutedImage = new BufferedImage(originalCardImage.getWidth(), originalCardImage.getHeight(), BufferedImage.TYPE_INT_RGB);
@@ -28,6 +30,24 @@ public class ConvolutionLayer {
             convolutionResult.add(convolutedImage);
         }
         return convolutionResult;
+    }
+
+    public void backprop(double[][][] poolLayerGradient, double learnRate) {
+        for (int i = 1; i < original.getWidth() - 1; i++) {
+            for (int j = 1; j < original.getHeight() - 1; j++) {
+                int[] imgChunk = original.getRGB(i - 1, j - 1, 3, 3, null, 0, 3);
+                for (int filterIdx = 0; filterIdx < filters.size(); filterIdx++) {
+                    double[] filter = filters.get(filterIdx);
+                    for (int w = 0; w < 3; w++) {
+                        for (int h = 0; h < 3; h++) {
+                            for (int x = 0; x < filter.length; x++) {
+                                filter[x] -= learnRate * poolLayerGradient[filterIdx][(i - 1) + w][(j - 1) + h] * imgChunk[w * 3 + h];
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public List<BufferedImage> getConvolutionResult() {

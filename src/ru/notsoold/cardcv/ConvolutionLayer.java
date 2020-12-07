@@ -1,16 +1,17 @@
 package ru.notsoold.cardcv;
 
 import java.awt.image.BufferedImage;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import static ru.notsoold.cardcv.CardCvUtils.*;
 
-public class ConvolutionLayer {
+public class ConvolutionLayer implements Serializable {
 
     private List<double[]> filters;
-    private BufferedImage original;
-    private List<BufferedImage> convolutionResult;
+    private transient BufferedImage original;
+    private transient List<BufferedImage> convolutionResult;
 
     public ConvolutionLayer(int filtersQuantity) {
         generateFilters(filtersQuantity);
@@ -77,7 +78,4 @@ public class ConvolutionLayer {
             }
         }
     }
-
-    public void loadFilters(List<double[]> filters) { this.filters = filters; }
-    public List<double[]> saveFilters() { return this.filters; }
 }

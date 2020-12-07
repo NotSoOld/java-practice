@@ -1,11 +1,7 @@
 package ru.notsoold.cardcv;
 
 import java.awt.image.BufferedImage;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
-import static ru.notsoold.cardcv.CardCvUtils.*;
+import java.util.*;
 import static ru.notsoold.cardcv.PlayingCardsIdentifier.CONVOLUTION_LAYER_FILTERS_QUANTITY;
 
 public class PoolLayer {

@@ -1,18 +1,19 @@
 package ru.notsoold.cardcv;
 
 import java.awt.image.BufferedImage;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import static ru.notsoold.cardcv.PlayingCardsIdentifier.CONVOLUTION_LAYER_FILTERS_QUANTITY;
 
-public class FullyConnectedLayer {
+public class FullyConnectedLayer implements Serializable {
 
     private double[][] weights;
     private double[] biases;
-    private double[] normFlattenedInput;
-    private double[] totals;
-    private double[] softmaxResults;
+    private transient double[] normFlattenedInput;
+    private transient double[] totals;
+    private transient double[] softmaxResults;
 
     public FullyConnectedLayer(int weightsSize) {
         this.weights = new double[weightsSize][52];
@@ -33,23 +34,22 @@ public class FullyConnectedLayer {
 
     public double[][][] backprop(int idxOfCorrectRslt, double learnRate) {
         double[] gradient = new double[52];
-        gradient[idxOfCorrectRslt] = -1 / softmaxResults[idxOfCorrectRslt]; // -51
+        gradient[idxOfCorrectRslt] = -1 / softmaxResults[idxOfCorrectRslt];
         // e^totals; size = 52
         double[] e_totals = Arrays.stream(totals).map(Math::exp).toArray();
-        // Sum of e^totals
         double sum = Arrays.stream(e_totals).sum();
-        // Gradients of out[i] against totals. // 52
+        // Gradients of out[i] against totals. size = 52
         double[] d_out_d_t = Arrays.stream(e_totals).map(e_total -> (e_total * -e_totals[idxOfCorrectRslt]) / (sum * sum)).toArray();
         d_out_d_t[idxOfCorrectRslt] = e_totals[idxOfCorrectRslt] * (sum - e_totals[idxOfCorrectRslt]) / (sum * sum);
 
         // Gradients of totals against weights/biases/input
-        double[] d_t_d_w = normFlattenedInput;  // FULLY_CONNECTED_LAYER_WEIGHTS_SIZE
+        double[] d_t_d_w = normFlattenedInput;  // size = FULLY_CONNECTED_LAYER_WEIGHTS_SIZE
         double d_t_d_b = 1;
         double[][] d_t_d_inputs = weights;
 
-        // Gradients of loss against totals     // 52
+        // Gradients of loss against totals; size = 52
         double[] d_L_d_t = Arrays.stream(d_out_d_t).map(d -> d * gradient[idxOfCorrectRslt]).toArray();
-        // 52 x FULLY_CONNECTED_LAYER_WEIGHTS_SIZE
+        // size = 52 x FULLY_CONNECTED_LAYER_WEIGHTS_SIZE
         double[][] d_L_d_w = Arrays.stream(d_t_d_w).mapToObj(d1 -> Arrays.stream(d_L_d_t).map(d2 -> d1 * d2).toArray()).toArray(double[][]::new);
         double[] d_L_d_b = Arrays.stream(d_L_d_t).map(d -> d * d_t_d_b).toArray();
         // d_L_d_inputs = d_t_d_inputs @ d_L_d_t;   length = FULLY_CONNECTED_LAYER_WEIGHTS_SIZE

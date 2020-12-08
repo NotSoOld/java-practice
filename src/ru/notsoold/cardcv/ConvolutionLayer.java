@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static ru.notsoold.cardcv.CardCvUtils.*;
 
 public class ConvolutionLayer implements Serializable {
+    private static final long serialVersionUID = 187604289977964733L;
 
     private List<double[]> filters;
     private transient BufferedImage original;

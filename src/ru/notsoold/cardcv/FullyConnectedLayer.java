@@ -8,6 +8,7 @@ import java.util.concurrent.ThreadLocalRandom;
 import static ru.notsoold.cardcv.PlayingCardsIdentifier.CONVOLUTION_LAYER_FILTERS_QUANTITY;
 
 public class FullyConnectedLayer implements Serializable {
+    private static final long serialVersionUID = 3459892349264733L;
 
     private double[][] weights;
     private double[] biases;
@@ -59,7 +60,7 @@ public class FullyConnectedLayer implements Serializable {
         // Update weights and biases.
         for (int i = 0; i < weights.length; i++) {
             for (int j = 0; j < weights[i].length; j++) {
-                weights[i][j] -= learnRate * d_L_d_w[i][j] * 100;
+                weights[i][j] -= learnRate * d_L_d_w[i][j] * 1_000;
             }
         }
         for (int i = 0; i < biases.length; i++) {

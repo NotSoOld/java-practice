@@ -5,10 +5,12 @@ import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.*;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import static ru.notsoold.cardcv.CardCvUtils.*;
 
 public class PlayingCardsIdentifier implements Serializable {
+    private static final long serialVersionUID = 1879428424962345L;
 
     public static final int CONVOLUTION_LAYER_FILTERS_QUANTITY = 4;
     /** Depends on card size defined in CardsCutter (70 x 100),
@@ -30,6 +32,7 @@ public class PlayingCardsIdentifier implements Serializable {
     }
 
     public void main() throws Exception {
+        AtomicInteger correctGuesses = new AtomicInteger();
         List<Path> trainingPlayingCards = Files.walk(Paths.get("CSSSRCase\\src\\cut_cards\\")).filter(Files::isRegularFile).collect(Collectors.toList());
         for (int i = 0; i < 1000; i++) {
             Collections.shuffle(trainingPlayingCards);
@@ -44,6 +47,7 @@ public class PlayingCardsIdentifier implements Serializable {
                     String expectedCard = imageFile.getParent().getFileName().toString();
                     if (expectedCard.equals(cardsMapping.get(maxProbabilityIndex))) {
                         System.out.println(expectedCard);
+                        correctGuesses.incrementAndGet();
                     }
                     // System.out.print(maxProbabilityIndex != -1 ? ("I guess it's " + cardsMapping.get(maxProbabilityIndex)) : "no maximum");
                     // System.out.println("; it was " + expectedCard + (expectedCard.equals(cardsMapping.get(maxProbabilityIndex)) ? " - correct!" : ""));
@@ -51,7 +55,7 @@ public class PlayingCardsIdentifier implements Serializable {
                     double[][][] backpropResults = fullyConnectedLayer.backprop(cardsMapping.indexOf(expectedCard), 0.1);
                     backpropResults = poolLayer2.backprop(backpropResults);
                     backpropResults = poolLayer1.backprop(backpropResults);
-                    convolutionLayer.backprop(backpropResults, 1000);
+                    convolutionLayer.backprop(backpropResults, 10000);
 
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -61,7 +65,8 @@ public class PlayingCardsIdentifier implements Serializable {
             ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("PlayingCardsIdentifier.jobj"));
             oos.writeObject(this);
             oos.flush();
-            System.out.println("Wrote CNN to the filesystem");
+            System.out.println("Wrote CNN to the filesystem; correctGuesses = " + ((double)correctGuesses.get() / trainingPlayingCards.size()) * 100);
+            correctGuesses.set(0);
         }
     }
 }

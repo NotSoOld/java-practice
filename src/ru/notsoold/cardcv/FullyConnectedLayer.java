@@ -5,7 +5,6 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-import static ru.notsoold.cardcv.PlayingCardsIdentifier.CONVOLUTION_LAYER_FILTERS_QUANTITY;
 
 public class FullyConnectedLayer implements Serializable {
     private static final long serialVersionUID = 3459892349264733L;
@@ -16,25 +15,27 @@ public class FullyConnectedLayer implements Serializable {
     private transient double[] totals;
     private transient double[] softmaxResults;
 
-    public FullyConnectedLayer(int weightsSize) {
-        this.weights = new double[weightsSize][52];
+    public FullyConnectedLayer(PlayingCardsIdentifier container) {
+        int weightsSize = container.getFiltersCnt() * container.getFclInputImgWidth() * container.getFclInputImgHeight();
+        int fclChoicesCnt = container.getFclChoicesCnt();
+        this.weights = new double[weightsSize][fclChoicesCnt];
         for (int i = 0; i < weightsSize; i++) {
-            for (int j = 0; j < 52; j++) {
-                weights[i][j] = ThreadLocalRandom.current().nextGaussian() / 52;
+            for (int j = 0; j < fclChoicesCnt; j++) {
+                weights[i][j] = ThreadLocalRandom.current().nextGaussian() / fclChoicesCnt;
             }
         }
-        this.biases = new double[52];
+        this.biases = new double[fclChoicesCnt];
     }
 
-    public double[] forward(List<BufferedImage> pooledImages) {
+    public double[] forward(List<BufferedImage> pooledImages, PlayingCardsIdentifier container) {
         normFlattenedInput = normalizeInputImages(flattenInputImages(pooledImages));
-        totals = propagateForward(normFlattenedInput);
+        totals = propagateForward(normFlattenedInput, container.getFclChoicesCnt());
         softmaxResults = softmax(totals);
         return softmaxResults;
     }
 
-    public double[][][] backprop(int idxOfCorrectRslt, double learnRate) {
-        double[] gradient = new double[52];
+    public double[][][] backprop(int idxOfCorrectRslt, double learnRate, PlayingCardsIdentifier container) {
+        double[] gradient = new double[container.getFclChoicesCnt()];
         gradient[idxOfCorrectRslt] = -1 / softmaxResults[idxOfCorrectRslt];
         // e^totals; size = 52
         double[] e_totals = Arrays.stream(totals).map(Math::exp).toArray();
@@ -67,11 +68,13 @@ public class FullyConnectedLayer implements Serializable {
             biases[i] -= learnRate * d_L_d_b[i];
         }
 
-        double[][][] d_L_d_inputsShaped = new double[CONVOLUTION_LAYER_FILTERS_QUANTITY][17][25];
+        int fclInputImgWidth = container.getFclInputImgWidth();
+        int fclInputImgHeight = container.getFclInputImgHeight();
+        double[][][] d_L_d_inputsShaped = new double[container.getFiltersCnt()][fclInputImgWidth][fclInputImgHeight];
         for (int i = 0; i < d_L_d_inputsShaped.length; i++) {
             for (int j = 0; j < d_L_d_inputsShaped[i].length; j++) {
                 for (int k = 0; k < d_L_d_inputsShaped[i][j].length; k++) {
-                    d_L_d_inputsShaped[i][j][k] = d_L_d_inputs[i * 17 * 25 + j * 25 + k];
+                    d_L_d_inputsShaped[i][j][k] = d_L_d_inputs[i * fclInputImgWidth * fclInputImgHeight + j * fclInputImgHeight + k];
                 }
             }
         }
@@ -92,10 +95,10 @@ public class FullyConnectedLayer implements Serializable {
         return Arrays.stream(flattenedInput).mapToDouble(rgb -> ((rgb & 0xffffff) / 16777216.0) / weights.length).toArray();
     }
 
-    private double[] propagateForward(double[] normalizedImageInputs) {
+    private double[] propagateForward(double[] normalizedImageInputs, int fclChoicesCnt) {
         // imageInputs: weightsSize; weights: weightsSize x 52
-        double[] dotProductResult = new double[52];
-        for (int k = 0; k < 52; k++) {
+        double[] dotProductResult = new double[fclChoicesCnt];
+        for (int k = 0; k < fclChoicesCnt; k++) {
             for (int i = 0; i < weights.length; i++) {
                 for (int j = 0; j < weights.length; j++) {
                     dotProductResult[k] += normalizedImageInputs[i] * weights[j][k];

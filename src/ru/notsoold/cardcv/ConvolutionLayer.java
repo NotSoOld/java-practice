@@ -14,8 +14,8 @@ public class ConvolutionLayer implements Serializable {
     private transient BufferedImage original;
     private transient List<BufferedImage> convolutionResult;
 
-    public ConvolutionLayer(int filtersQuantity) {
-        generateFilters(filtersQuantity);
+    public ConvolutionLayer(PlayingCardsIdentifier container) {
+        generateFilters(container.getFiltersCnt());
     }
 
     public List<BufferedImage> forward(BufferedImage originalCardImage) {

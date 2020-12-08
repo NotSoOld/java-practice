@@ -2,7 +2,6 @@ package ru.notsoold.cardcv;
 
 import java.awt.image.BufferedImage;
 import java.util.*;
-import static ru.notsoold.cardcv.PlayingCardsIdentifier.CONVOLUTION_LAYER_FILTERS_QUANTITY;
 
 public class PoolLayer {
 
@@ -27,8 +26,8 @@ public class PoolLayer {
         return resultPooledImages;
     }
 
-    public double[][][] backprop(double[][][] fclGradient) {
-        double[][][] ret = new double[CONVOLUTION_LAYER_FILTERS_QUANTITY][originals.get(0).getWidth()][originals.get(0).getHeight()];
+    public double[][][] backprop(double[][][] fclGradient, PlayingCardsIdentifier container) {
+        double[][][] ret = new double[container.getFiltersCnt()][originals.get(0).getWidth()][originals.get(0).getHeight()];
         for (int filterIdx = 0; filterIdx < originals.size(); filterIdx++) {
             BufferedImage original = originals.get(filterIdx);
             for (int w = 0; w < original.getWidth() - 1; w += 2) {

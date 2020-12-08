@@ -12,22 +12,42 @@ import static ru.notsoold.cardcv.CardCvUtils.*;
 public class PlayingCardsIdentifier implements Serializable {
     private static final long serialVersionUID = 1879428424962345L;
 
-    public static final int CONVOLUTION_LAYER_FILTERS_QUANTITY = 4;
-    /** Depends on card size defined in CardsCutter (70 x 100),
-     * the number of consecutively used PoolLayers (each of these divides card size by 2)
-     * and the number of filters used in ConvolutionLayer ({@link PlayingCardsIdentifier#CONVOLUTION_LAYER_FILTERS_QUANTITY}). */
-    private static final int FULLY_CONNECTED_LAYER_WEIGHTS_SIZE = 17 * 25 * CONVOLUTION_LAYER_FILTERS_QUANTITY;
+    private ConvolutionLayer convolutionLayer;
+    private transient PoolLayer[] poolLayers;
+    private FullyConnectedLayer fullyConnectedLayer;
 
-    private ConvolutionLayer convolutionLayer = new ConvolutionLayer(CONVOLUTION_LAYER_FILTERS_QUANTITY);
-    private transient PoolLayer poolLayer1, poolLayer2;
-    private FullyConnectedLayer fullyConnectedLayer = new FullyConnectedLayer(FULLY_CONNECTED_LAYER_WEIGHTS_SIZE);
+    // CNN parameters
+    private String cnnId;
+    private int filtersCnt;
+    private int poolLayersCnt;
+    private int origImgWidth;
+    private int origImgHeight;
+    private int fclChoicesCnt;
+    private int fclInputImgWidth;
+    private int fclInputImgHeight;
+
+    public PlayingCardsIdentifier(String cnnId, int filtersCnt, int poolLayersCnt, int origImgWidth, int origImgHeight, int fclChoicesCnt) {
+        this.cnnId = cnnId;
+        this.filtersCnt = filtersCnt;
+        this.poolLayersCnt = poolLayersCnt;
+        this.origImgWidth = origImgWidth;
+        this.origImgHeight = origImgHeight;
+        this.fclChoicesCnt = fclChoicesCnt;
+
+        this.fclInputImgWidth = (int)(origImgWidth / (Math.pow(2, poolLayersCnt)));
+        this.fclInputImgHeight = (int)(origImgHeight / (Math.pow(2, poolLayersCnt)));
+
+        this.convolutionLayer = new ConvolutionLayer(this);
+        this.poolLayers = new PoolLayer[poolLayersCnt];
+        this.fullyConnectedLayer = new FullyConnectedLayer(this);
+    }
 
     public static void main(String[] args) throws Exception {
         if (Files.exists(Paths.get("PlayingCardsIdentifier.jobj"))) {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream("PlayingCardsIdentifier.jobj"));
             ((PlayingCardsIdentifier)ois.readObject()).main();
         } else {
-            new PlayingCardsIdentifier().main();
+            new PlayingCardsIdentifier("PlayingCardsIdentifier", 4, 2, 70, 100, 52).main();
         }
     }
 
@@ -39,10 +59,12 @@ public class PlayingCardsIdentifier implements Serializable {
             trainingPlayingCards.forEach(imageFile -> {
                 try {
                     BufferedImage originalCardImage = ImageIO.read(imageFile.toFile());
-                    List<BufferedImage> imageConvolutedByDifferentFilters = convolutionLayer.forward(originalCardImage);
-                    poolLayer1 = new PoolLayer(imageConvolutedByDifferentFilters);
-                    poolLayer2 = new PoolLayer(poolLayer1.forward());
-                    double[] softmaxResults = fullyConnectedLayer.forward(poolLayer2.forward());
+                    List<BufferedImage> result = convolutionLayer.forward(originalCardImage);
+                    for (int j = 0; j < poolLayersCnt; j++) {
+                        poolLayers[j] = new PoolLayer(result);
+                        result = poolLayers[j].forward();
+                    }
+                    double[] softmaxResults = fullyConnectedLayer.forward(result, this);
                     int maxProbabilityIndex = getIndexOfMaxElement(softmaxResults);
                     String expectedCard = imageFile.getParent().getFileName().toString();
                     if (expectedCard.equals(cardsMapping.get(maxProbabilityIndex))) {
@@ -52,9 +74,10 @@ public class PlayingCardsIdentifier implements Serializable {
                     // System.out.print(maxProbabilityIndex != -1 ? ("I guess it's " + cardsMapping.get(maxProbabilityIndex)) : "no maximum");
                     // System.out.println("; it was " + expectedCard + (expectedCard.equals(cardsMapping.get(maxProbabilityIndex)) ? " - correct!" : ""));
 
-                    double[][][] backpropResults = fullyConnectedLayer.backprop(cardsMapping.indexOf(expectedCard), 0.1);
-                    backpropResults = poolLayer2.backprop(backpropResults);
-                    backpropResults = poolLayer1.backprop(backpropResults);
+                    double[][][] backpropResults = fullyConnectedLayer.backprop(cardsMapping.indexOf(expectedCard), 0.1, this);
+                    for (int j = poolLayersCnt - 1; j >= 0; j--) {
+                        backpropResults = poolLayers[j].backprop(backpropResults, this);
+                    }
                     convolutionLayer.backprop(backpropResults, 10000);
 
                 } catch (Exception e) {
@@ -69,4 +92,12 @@ public class PlayingCardsIdentifier implements Serializable {
             correctGuesses.set(0);
         }
     }
+
+    int getFiltersCnt() { return filtersCnt; }
+    int getOrigImgWidth() { return origImgWidth; }
+    int getOrigImgHeight() { return origImgHeight; }
+    int getPoolLayersCnt() { return poolLayersCnt; }
+    int getFclChoicesCnt() { return fclChoicesCnt; }
+    int getFclInputImgWidth() { return fclInputImgWidth; }
+    int getFclInputImgHeight() { return fclInputImgHeight; }
 }

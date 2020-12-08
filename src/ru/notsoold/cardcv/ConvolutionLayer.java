@@ -14,7 +14,7 @@ public class ConvolutionLayer implements Serializable {
     private transient BufferedImage original;
     private transient List<BufferedImage> convolutionResult;
 
-    public ConvolutionLayer(PlayingCardsIdentifier container) {
+    public ConvolutionLayer(ConvolutionNeuralNetworkContainer container) {
         generateFilters(container.getFiltersCnt());
     }
 
@@ -43,7 +43,7 @@ public class ConvolutionLayer implements Serializable {
                     for (int w = 0; w < 3; w++) {
                         for (int h = 0; h < 3; h++) {
                             for (int x = 0; x < filter.length; x++) {
-                                filter[x] -= learnRate * poolLayerGradient[filterIdx][(i - 1) + w][(j - 1) + h] * imgChunk[w * 3 + h];
+                                filter[x] -= learnRate * poolLayerGradient[filterIdx][(i - 1) + w][(j - 1) + h] * ((imgChunk[w * 3 + h] & 0xffffff) / 16777216.0);
                             }
                         }
                     }
@@ -70,8 +70,8 @@ public class ConvolutionLayer implements Serializable {
      */
     private void generateFilters(int quantity) {
         this.filters = new ArrayList<>();
-        this.filters.add(new double[] { 0.25, 0.5, 0.25, 0, 0, 0, -0.25, -0.5, -0.25 });
-        this.filters.add(new double[] { -0.25, 0, 0.25, -0.5, 0, 0.5, -0.25, 0, 0.25 });
+        this.filters.add(new double[] { 0.5, 1, 0.5, 0, 0, 0, -0.5, -1, -0.5 });
+        this.filters.add(new double[] { -0.5, 0, 0.5, -1, 0, 1, -0.5, 0, 0.5 });
         for (int i = 2; i < quantity; i++) {
             this.filters.add(new double[9]);
             for (int j = 0; j < 9; j++) {

@@ -26,7 +26,7 @@ public class PoolLayer {
         return resultPooledImages;
     }
 
-    public double[][][] backprop(double[][][] fclGradient, PlayingCardsIdentifier container) {
+    public double[][][] backprop(double[][][] fclGradient, ConvolutionNeuralNetworkContainer container) {
         double[][][] ret = new double[container.getFiltersCnt()][originals.get(0).getWidth()][originals.get(0).getHeight()];
         for (int filterIdx = 0; filterIdx < originals.size(); filterIdx++) {
             BufferedImage original = originals.get(filterIdx);

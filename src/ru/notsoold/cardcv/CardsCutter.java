@@ -30,7 +30,7 @@ public class CardsCutter {
                 BufferedImage outputImage = new BufferedImage(70, 100, BufferedImage.TYPE_INT_RGB);
                 outputImage.getGraphics().drawImage(subImage, 0, 0, null);
                 // Check if this is the actual card.
-                if (!new Color(rgbToHardBW(outputImage.getRGB(50, 20))).equals(Color.WHITE)) {
+                if (rgbToHardBW(outputImage.getRGB(50, 20)) != 255) {
                     continue;
                 }
                 cutCards.add(outputImage);
@@ -40,4 +40,7 @@ public class CardsCutter {
         }
         return cutCards;
     }
+
+    public static BufferedImage cutCardSuit(BufferedImage wholeCardImage) { return wholeCardImage.getSubimage(26, 58, 40, 40); }
+    public static BufferedImage cutCardValue(BufferedImage wholeCardImage) { return wholeCardImage.getSubimage(5, 5, 30, 30); }
 }

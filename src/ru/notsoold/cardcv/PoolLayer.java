@@ -46,11 +46,7 @@ public class PoolLayer {
         return ret;
     }
 
-    public List<BufferedImage> getResultPooledImages() {
-        return resultPooledImages;
-    }
+    public List<BufferedImage> getResultPooledImages() { return resultPooledImages; }
 
-    private int getMaxRgb2x2(int[] imageChunk) {
-        return Arrays.stream(imageChunk).max().getAsInt();
-    }
+    private int getMaxRgb2x2(int[] imageChunk) { return Arrays.stream(imageChunk).max().getAsInt(); }
 }

@@ -41,13 +41,13 @@ public class ConvolutionNeuralNetworkContainer implements Serializable, Callable
         this.fullyConnectedLayer = new FullyConnectedLayer(this);
     }
 
-    public void setTrainingSet(List<Pair<BufferedImage, String>> trainingSet) { this.trainingSet = trainingSet; }
+    public ConvolutionNeuralNetworkContainer trainingSet(List<Pair<BufferedImage, String>> trainingSet) { this.trainingSet = trainingSet; return this; }
 
-    public void setImagesToIdentify(List<BufferedImage> imagesToIdentify) { this.imagesToIdentify = imagesToIdentify; }
+    public ConvolutionNeuralNetworkContainer identifyImages(List<BufferedImage> imagesToIdentify) { this.imagesToIdentify = imagesToIdentify; return this; }
 
-    public void setMapping(List<String> mapping) { this.mapping = mapping; }
+    public ConvolutionNeuralNetworkContainer mapping(List<String> mapping) { this.mapping = mapping; return this; }
 
-    public void setInTrainingMode(boolean isInTrainingMode) { this.isInTrainingMode = isInTrainingMode; }
+    public ConvolutionNeuralNetworkContainer isTraining(boolean isInTrainingMode) { this.isInTrainingMode = isInTrainingMode; return this; }
 
     public List<String> getIdentificationResults() { return identificationResults; }
 
@@ -63,7 +63,6 @@ public class ConvolutionNeuralNetworkContainer implements Serializable, Callable
     }
 
     private void identify() {
-        System.out.println(cnnId + ": started to identify");
         identificationResults = new ArrayList<>();
         imagesToIdentify.forEach(imageToIdentify -> {
             List<BufferedImage> result = convolutionLayer.forward(imageToIdentify);
@@ -104,7 +103,7 @@ public class ConvolutionNeuralNetworkContainer implements Serializable, Callable
             try {
                 double correctGuessesRate = (double)correctGuesses.get() / trainingSet.size();
                 System.out.print("correctGuesses = " + new DecimalFormat("###.###").format(correctGuessesRate * 100) + "%");
-                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(cnnId + ".jobj"));
+                ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream("networks\\" + cnnId + ".jobj"));
                 oos.writeObject(this);
                 oos.flush();
                 System.out.println(", wrote CNN " + cnnId + " to the filesystem.");

@@ -52,9 +52,7 @@ public class ConvolutionLayer implements Serializable {
         }
     }
 
-    public List<BufferedImage> getConvolutionResult() {
-        return convolutionResult;
-    }
+    public List<BufferedImage> getConvolutionResult() { return convolutionResult; }
 
     private int convolute(double[] kernel, int[] imageChunk) {
         int ret = 0;

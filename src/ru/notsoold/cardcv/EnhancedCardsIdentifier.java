@@ -21,9 +21,9 @@ public class EnhancedCardsIdentifier {
             return;
         }
         if ("train".equals(args[0])) {
-            train(args[1]);  // "CSSSRCase\\src\\cut_cards\\"
+            train(args[1]);  // "cut_cards\\"
         } else if ("identify".equals(args[0])) {
-            identify(args[1]);  // "CSSSRCase\\src\\identify_screens\\"
+            identify(args[1]);  // "identify_screens\\"
         }
     }
 
@@ -58,45 +58,34 @@ public class EnhancedCardsIdentifier {
         ThreadPoolExecutor executor = new ThreadPoolExecutor(2, 2, 60000, TimeUnit.MILLISECONDS, new LinkedBlockingQueue<>());
         screenshotsToIdentify.forEach(listOfCardsOnTable -> {
             try {
-                long start = System.currentTimeMillis();
                 List<BufferedImage> listOfCardSuits = listOfCardsOnTable.stream().map(CardsCutter::cutCardSuit).collect(Collectors.toList());
                 List<BufferedImage> listOfCardvalues = listOfCardsOnTable.stream().map(CardsCutter::cutCardValue).collect(Collectors.toList());
-                suitCNN.setImagesToIdentify(listOfCardSuits);
-                valueCNN.setImagesToIdentify(listOfCardvalues);
-                Future<List<String>> suitIdentificationFuture = executor.submit(suitCNN);
-                Future<List<String>> valueIdentificationFuture = executor.submit(valueCNN);
+                Future<List<String>> suitIdentificationFuture = executor.submit(suitCNN.identifyImages(listOfCardSuits));
+                Future<List<String>> valueIdentificationFuture = executor.submit(valueCNN.identifyImages(listOfCardvalues));
                 List<String> suitIdentificationResult = suitIdentificationFuture.get();
                 List<String> valueIdentificationResult = valueIdentificationFuture.get();
                 for (int i = 0; i < listOfCardsOnTable.size(); i++) {
                     System.out.print(valueIdentificationResult.get(i) + suitIdentificationResult.get(i));
                 }
                 System.out.println();
-                System.out.println("" + (System.currentTimeMillis() - start));
             } catch (Exception e) { e.printStackTrace(); }
         });
         executor.shutdown();
         // Identification of the card by the whole image.
         ConvolutionNeuralNetworkContainer wholeCardCNN = getWholeCardCnnForIdentification(null);
         screenshotsToIdentify.forEach(listOfCardsOnTable -> {
-            long start = System.currentTimeMillis();
-            wholeCardCNN.setImagesToIdentify(listOfCardsOnTable);
-            wholeCardCNN.call().forEach(System.out::print);
+            wholeCardCNN.identifyImages(listOfCardsOnTable).call().forEach(System.out::print);
             System.out.println();
-            System.out.println("" + (System.currentTimeMillis() - start));
         });
     }
 
     public static ConvolutionNeuralNetworkContainer loadOrCreateCNN(String jObjPath, String cnnId, int filtersCnt, int poolLayersCnt, int origImgWidth, int origImgHeight, int fclChoicesCnt, boolean forTraining) throws Exception {
         if (Files.exists(Paths.get(jObjPath))) {
             ObjectInputStream ois = new ObjectInputStream(new FileInputStream(jObjPath));
-            ConvolutionNeuralNetworkContainer cnn = ((ConvolutionNeuralNetworkContainer)ois.readObject());
-            cnn.setInTrainingMode(forTraining);
-            return cnn;
+            return ((ConvolutionNeuralNetworkContainer)ois.readObject()).isTraining(forTraining);
         } else {
             if (forTraining) {
-                ConvolutionNeuralNetworkContainer cnn = new ConvolutionNeuralNetworkContainer(cnnId, filtersCnt, poolLayersCnt, origImgWidth, origImgHeight, fclChoicesCnt);
-                cnn.setInTrainingMode(forTraining);
-                return cnn;
+                return new ConvolutionNeuralNetworkContainer(cnnId, filtersCnt, poolLayersCnt, origImgWidth, origImgHeight, fclChoicesCnt).isTraining(forTraining);
             } else {
                 throw new RuntimeException("Cannot find trained CNN " + cnnId + " in " + jObjPath + ", first train and save it.");
             }
@@ -104,45 +93,26 @@ public class EnhancedCardsIdentifier {
     }
 
     public static ConvolutionNeuralNetworkContainer getCardSuitCnnForTraining(List<Pair<BufferedImage, String>> cardSuitImagesTrainingSet) throws Exception {
-        ConvolutionNeuralNetworkContainer suitCNN = loadOrCreateCNN("CSSSRCase\\suitCNN_1.0.jobj", "suitCNN_1.0", 4, 1, 40, 40, 4, true);
-        suitCNN.setTrainingSet(cardSuitImagesTrainingSet);
-        suitCNN.setMapping(CardCvUtils.cardSuitsMapping);
-        return suitCNN;
+        return loadOrCreateCNN("networks\\suitCNN_1.0.jobj", "suitCNN_1.0", 4, 1, 40, 40, 4, true).trainingSet(cardSuitImagesTrainingSet).mapping(CardCvUtils.cardSuitsMapping);
     }
 
     public static ConvolutionNeuralNetworkContainer getCardSuitCnnForIdentification(List<BufferedImage> cardSuitImagesIdentificationSet) throws Exception {
-        ConvolutionNeuralNetworkContainer suitCNN = loadOrCreateCNN("CSSSRCase\\suitCNN_1.0.jobj", "suitCNN_1.0", 4, 1, 40, 40, 4, false);
-        suitCNN.setImagesToIdentify(cardSuitImagesIdentificationSet);
-        suitCNN.setMapping(CardCvUtils.cardSuitsMapping);
-        return suitCNN;
+        return loadOrCreateCNN("networks\\suitCNN_1.0.jobj", "suitCNN_1.0", 4, 1, 40, 40, 4, false).identifyImages(cardSuitImagesIdentificationSet).mapping(CardCvUtils.cardSuitsMapping);
     }
 
     public static ConvolutionNeuralNetworkContainer getCardValueCnnForTraining(List<Pair<BufferedImage, String>> cardValueImagesTrainingSet) throws Exception {
-        ConvolutionNeuralNetworkContainer valueCNN = loadOrCreateCNN("CSSSRCase\\valueCNN_1.0.jobj", "valueCNN_1.0", 4, 1, 30, 30, 13, true);
-        valueCNN.setTrainingSet(cardValueImagesTrainingSet);
-        valueCNN.setMapping(CardCvUtils.cardValuesMapping);
-        return valueCNN;
+        return loadOrCreateCNN("networks\\valueCNN_1.0.jobj", "valueCNN_1.0", 4, 1, 30, 30, 13, true).trainingSet(cardValueImagesTrainingSet).mapping(CardCvUtils.cardValuesMapping);
     }
 
     public static ConvolutionNeuralNetworkContainer getCardValueCnnForIdentification(List<BufferedImage> cardValueImagesIdentificationSet) throws Exception {
-        ConvolutionNeuralNetworkContainer valueCNN = loadOrCreateCNN("CSSSRCase\\valueCNN_1.0.jobj", "valueCNN_1.0", 4, 1, 30, 30, 13, false);
-        valueCNN.setImagesToIdentify(cardValueImagesIdentificationSet);
-        valueCNN.setMapping(CardCvUtils.cardValuesMapping);
-        return valueCNN;
+        return loadOrCreateCNN("networks\\valueCNN_1.0.jobj", "valueCNN_1.0", 4, 1, 30, 30, 13, false).identifyImages(cardValueImagesIdentificationSet).mapping(CardCvUtils.cardValuesMapping);
     }
 
     public static ConvolutionNeuralNetworkContainer getWholeCardCnnForTraining(List<Pair<BufferedImage, String>> wholeCardsTrainingSet) throws Exception {
-        ConvolutionNeuralNetworkContainer cardCNN = loadOrCreateCNN("CSSSRCase\\PlayingCardsIdentifier.jobj", "PlayingCardsIdentifier", 4, 2, 70, 100, 52, true);
-        cardCNN.setTrainingSet(wholeCardsTrainingSet);
-        cardCNN.setMapping(CardCvUtils.cardsMapping);
-        return cardCNN;
+        return loadOrCreateCNN("networks\\PlayingCardsIdentifier.jobj", "PlayingCardsIdentifier", 4, 2, 70, 100, 52, true).trainingSet(wholeCardsTrainingSet).mapping(CardCvUtils.cardsMapping);
     }
 
     public static ConvolutionNeuralNetworkContainer getWholeCardCnnForIdentification(List<BufferedImage> wholeCardsIdentificationSet) throws Exception {
-        ConvolutionNeuralNetworkContainer cardCNN = loadOrCreateCNN("CSSSRCase\\PlayingCardsIdentifier.jobj", "PlayingCardsIdentifier", 4, 2, 70, 100, 52, false);
-        cardCNN.setImagesToIdentify(wholeCardsIdentificationSet);
-        cardCNN.setMapping(CardCvUtils.cardsMapping);
-        return cardCNN;
+        return loadOrCreateCNN("networks\\PlayingCardsIdentifier.jobj", "PlayingCardsIdentifier", 4, 2, 70, 100, 52, false).identifyImages(wholeCardsIdentificationSet).mapping(CardCvUtils.cardsMapping);
     }
-
 }

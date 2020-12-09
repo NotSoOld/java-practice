@@ -23,19 +23,21 @@ public class ConvolutionNeuralNetworkContainer implements Serializable, Callable
     private int fclChoicesCnt;
     private int fclInputImgWidth;
     private int fclInputImgHeight;
+    private double learnRate;
     private transient List<Pair<BufferedImage, String>> trainingSet;
     private transient List<String> mapping;
     private transient boolean isInTrainingMode;
     private transient List<BufferedImage> imagesToIdentify;
     private transient List<String> identificationResults;
 
-    public ConvolutionNeuralNetworkContainer(String cnnId, int filtersCnt, int poolLayersCnt, int origImgWidth, int origImgHeight, int fclChoicesCnt) {
+    public ConvolutionNeuralNetworkContainer(String cnnId, int filtersCnt, int poolLayersCnt, int origImgWidth, int origImgHeight, int fclChoicesCnt, double learnRate) {
         this.cnnId = cnnId;
         this.filtersCnt = filtersCnt;
         this.poolLayersCnt = poolLayersCnt;
         this.fclChoicesCnt = fclChoicesCnt;
         this.fclInputImgWidth = (int)(origImgWidth / (Math.pow(2, poolLayersCnt)));
         this.fclInputImgHeight = (int)(origImgHeight / (Math.pow(2, poolLayersCnt)));
+        this.learnRate = learnRate;
 
         this.convolutionLayer = new ConvolutionLayer(this);
         this.fullyConnectedLayer = new FullyConnectedLayer(this);
@@ -94,11 +96,11 @@ public class ConvolutionNeuralNetworkContainer implements Serializable, Callable
                 if (expectedCard.equals(mapping.get(maxProbabilityIndex))) {
                     correctGuesses.incrementAndGet();
                 }
-                double[][][] backpropResults = fullyConnectedLayer.backprop(mapping.indexOf(expectedCard), 0.01, this);
+                double[][][] backpropResults = fullyConnectedLayer.backprop(mapping.indexOf(expectedCard), learnRate, this);
                 for (int j = poolLayersCnt - 1; j >= 0; j--) {
                     backpropResults = poolLayers[j].backprop(backpropResults, this);
                 }
-                convolutionLayer.backprop(backpropResults, 0.01);
+                convolutionLayer.backprop(backpropResults, learnRate);
             });
             try {
                 double correctGuessesRate = (double)correctGuesses.get() / trainingSet.size();

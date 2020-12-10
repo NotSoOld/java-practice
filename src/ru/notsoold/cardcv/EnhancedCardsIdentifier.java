@@ -13,6 +13,11 @@ import java.util.stream.Collectors;
 
 // Compile into executable Jar:
 // "C:\Program Files\Java\jdk1.8.0_221\bin\jar.exe" cvfe CardCv.jar ru.notsoold.cardcv.EnhancedCardsIdentifier ru\notsoold\cardcv\*
+
+/**
+ * Created by Dmitriy "NotSoOld" Somov (1000lop@gmail.com)
+ * at 8 Dec 2020. All rights reserved.
+ */
 public class EnhancedCardsIdentifier {
 
     public static void main(String[] args) throws Exception {
@@ -50,8 +55,7 @@ public class EnhancedCardsIdentifier {
     }
 
     private static void identify(String pathToFolderWithImages) throws Exception {
-        List<Path> imagesPaths = Files.walk(Paths.get(pathToFolderWithImages)).filter(Files::isRegularFile).collect(Collectors.toList());
-        List<Pair<String, List<BufferedImage>>> screenshotsToIdentify = imagesPaths.stream()
+        List<Pair<String, List<BufferedImage>>> screenshotsToIdentify = Files.walk(Paths.get(pathToFolderWithImages)).filter(Files::isRegularFile)
                 .map(imgPath -> new Pair<>(imgPath.getFileName().toString(), CardsCutter.cut(imgPath))).collect(Collectors.toList());
         // Identification of the card by its suit and value.
         ConvolutionNeuralNetworkContainer suitCNN = getCardSuitCnnForIdentification(null);

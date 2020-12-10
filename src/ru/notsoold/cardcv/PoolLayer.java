@@ -3,6 +3,10 @@ package ru.notsoold.cardcv;
 import java.awt.image.BufferedImage;
 import java.util.*;
 
+/**
+ * Created by Dmitriy "NotSoOld" Somov (1000lop@gmail.com)
+ * at 7 Dec 2020. All rights reserved.
+ */
 public class PoolLayer {
 
     private List<BufferedImage> originals;

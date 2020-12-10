@@ -5,15 +5,16 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
-
+/**
+ * Created by Dmitriy "NotSoOld" Somov (1000lop@gmail.com)
+ * at 7 Dec 2020. All rights reserved.
+ */
 public class FullyConnectedLayer implements Serializable {
     private static final long serialVersionUID = 3459892349264733L;
 
     private double[][] weights;
     private double[] biases;
-    private transient double[] normFlattenedInput;
-    private transient double[] totals;
-    private transient double[] softmaxResults;
+    private transient double[] normFlattenedInput, totals, softmaxResults;
 
     public FullyConnectedLayer(ConvolutionNeuralNetworkContainer container) {
         int weightsSize = container.getFiltersCnt() * container.getFclInputImgWidth() * container.getFclInputImgHeight();

@@ -10,6 +10,10 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 import static ru.notsoold.cardcv.CardCvUtils.*;
 
+/**
+ * Created by Dmitriy "NotSoOld" Somov (1000lop@gmail.com)
+ * at 7 Dec 2020. All rights reserved.
+ */
 public class ConvolutionNeuralNetworkContainer implements Serializable, Callable<List<String>> {
     private static final long serialVersionUID = 1879428424962345L;
 
@@ -18,11 +22,7 @@ public class ConvolutionNeuralNetworkContainer implements Serializable, Callable
     private FullyConnectedLayer fullyConnectedLayer;
 
     private String cnnId;
-    private int filtersCnt;
-    private int poolLayersCnt;
-    private int fclChoicesCnt;
-    private int fclInputImgWidth;
-    private int fclInputImgHeight;
+    private int filtersCnt, poolLayersCnt, fclChoicesCnt, fclInputImgWidth, fclInputImgHeight;
     private double learnRate;
     private transient List<Pair<BufferedImage, String>> trainingSet;
     private transient List<String> mapping;

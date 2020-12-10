@@ -6,7 +6,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ThreadLocalRandom;
 import static ru.notsoold.cardcv.CardCvUtils.*;
-
+/**
+ * Created by Dmitriy "NotSoOld" Somov (1000lop@gmail.com)
+ * at 7 Dec 2020. All rights reserved.
+ */
 public class ConvolutionLayer implements Serializable {
     private static final long serialVersionUID = 187604289977964733L;
 

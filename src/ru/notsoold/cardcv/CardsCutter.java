@@ -8,7 +8,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import static ru.notsoold.cardcv.CardCvUtils.*;
-
+/**
+ * Created by Dmitriy "NotSoOld" Somov (1000lop@gmail.com)
+ * at 7 Dec 2020. All rights reserved.
+ */
 public class CardsCutter {
 
     private static final double upLeftCornerX = 0.2282;

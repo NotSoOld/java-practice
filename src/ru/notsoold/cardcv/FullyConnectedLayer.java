@@ -38,28 +38,17 @@ public class FullyConnectedLayer implements Serializable {
     public double[][][] backprop(int idxOfCorrectRslt, double learnRate, ConvolutionNeuralNetworkContainer container) {
         double[] gradient = new double[container.getFclChoicesCnt()];
         gradient[idxOfCorrectRslt] = -1 / softmaxResults[idxOfCorrectRslt];
-        // e^totals; size = 52
         double[] e_totals = Arrays.stream(totals).map(Math::exp).toArray();
         double sum = Arrays.stream(e_totals).sum();
-        // Gradients of out[i] against totals. size = 52
         double[] d_out_d_t = Arrays.stream(e_totals).map(e_total -> (e_total * -e_totals[idxOfCorrectRslt]) / (sum * sum)).toArray();
         d_out_d_t[idxOfCorrectRslt] = e_totals[idxOfCorrectRslt] * (sum - e_totals[idxOfCorrectRslt]) / (sum * sum);
-
-        // Gradients of totals against weights/biases/input
-        double[] d_t_d_w = normFlattenedInput;  // size = FULLY_CONNECTED_LAYER_WEIGHTS_SIZE
-        double d_t_d_b = 1;
-        double[][] d_t_d_inputs = weights;
-
-        // Gradients of loss against totals; size = 52
+        // Gradients of loss against totals.
         double[] d_L_d_t = Arrays.stream(d_out_d_t).map(d -> d * gradient[idxOfCorrectRslt]).toArray();
-        // size = 52 x FULLY_CONNECTED_LAYER_WEIGHTS_SIZE
-        double[][] d_L_d_w = Arrays.stream(d_t_d_w).mapToObj(d1 -> Arrays.stream(d_L_d_t).map(d2 -> d1 * d2).toArray()).toArray(double[][]::new);
-        double[] d_L_d_b = Arrays.stream(d_L_d_t).map(d -> d * d_t_d_b).toArray();
-        // d_L_d_inputs = d_t_d_inputs @ d_L_d_t;   length = FULLY_CONNECTED_LAYER_WEIGHTS_SIZE
-        double[] d_L_d_inputs = new double[d_t_d_inputs.length];
+        double[][] d_L_d_w = Arrays.stream(normFlattenedInput).mapToObj(d1 -> Arrays.stream(d_L_d_t).map(d2 -> d1 * d2).toArray()).toArray(double[][]::new);
+        double[] d_L_d_inputs = new double[weights.length];
         for (int i = 0; i < d_L_d_inputs.length; i++) {
             for (int j = 0; j < d_L_d_t.length; j++) {
-                d_L_d_inputs[i] += d_t_d_inputs[i][j] * d_L_d_t[j];
+                d_L_d_inputs[i] += weights[i][j] * d_L_d_t[j];
             }
         }
         // Update weights and biases.
@@ -69,7 +58,7 @@ public class FullyConnectedLayer implements Serializable {
             }
         }
         for (int i = 0; i < biases.length; i++) {
-            biases[i] -= learnRate * d_L_d_b[i];
+            biases[i] -= learnRate * d_L_d_t[i];
         }
 
         int fclInputImgWidth = container.getFclInputImgWidth();
@@ -100,7 +89,6 @@ public class FullyConnectedLayer implements Serializable {
     }
 
     private double[] propagateForward(double[] normalizedImageInputs, int fclChoicesCnt) {
-        // imageInputs: weightsSize; weights: weightsSize x 52
         double[] dotProductResult = new double[fclChoicesCnt];
         for (int k = 0; k < fclChoicesCnt; k++) {
             for (int i = 0; i < weights.length; i++) {

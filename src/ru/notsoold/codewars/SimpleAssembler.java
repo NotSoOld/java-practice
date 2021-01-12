@@ -51,12 +51,7 @@ class AssemblerVM {
     public Map<String, Integer> execute() {
         int cmdCounter = 0;
         while (cmdCounter < commands.size()) {
-            int optionalTransition = commands.get(cmdCounter).execute(registers);
-            if (optionalTransition != 0) {
-                cmdCounter += optionalTransition;
-                continue;
-            }
-            cmdCounter++;
+            cmdCounter += commands.get(cmdCounter).execute(registers);
         }
         return new HashMap<>(registers);
     }
@@ -112,7 +107,7 @@ class Mov implements AsmOperation {
     public int execute(Map<String, Integer> context) {
         int srcValue = parseOrGetFromContext(src, context);
         context.put(dest, srcValue);
-        return 0;
+        return 1;
     }
 
 }
@@ -136,7 +131,7 @@ class Inc implements AsmOperation {
         }
         int newValue = context.get(dest) + 1;
         context.put(dest, newValue);
-        return 0;
+        return 1;
     }
 }
 
@@ -159,7 +154,7 @@ class Dec implements AsmOperation {
         }
         int newValue = context.get(dest) - 1;
         context.put(dest, newValue);
-        return 0;
+        return 1;
     }
 
 }
@@ -184,6 +179,6 @@ class Jnz implements AsmOperation {
         if (parsedValueToTest != 0) {
             return parseOrGetFromContext(jumpAmount, context);
         }
-        return 0;
+        return 1;
     }
 }
